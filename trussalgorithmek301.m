@@ -1,4 +1,3 @@
-% EK301, Section C1, 7/27/20 
 
 
 % ------------------ input ------------------------------- 
@@ -33,7 +32,7 @@ L = [ 0 0 0 0 0 0 1 0 0 0];
 
 %---------------------------------------------------------
 
-% algorithim 
+% algorithm 
 
 % preallocate a vector 
 % double number of rows and add 3 columns and create matrix A
@@ -54,7 +53,9 @@ A(C_rows+1:A_rows, A_columns-2:A_columns) = Sy;
 
 
 % declare global variable
-first; 
+global first; 
+running_length = 0; 
+
 
 for i = 1:C_rows     
     
@@ -72,10 +73,8 @@ for i = 1:C_rows
         % transpose into horizontal vector 
         other_joints_touched_by_members = other_joints_touched_by_members'; 
         
-        %length of joints touched by members (always equal to 2)
-        lengthOfOtherJointsTouched =length(other_joints_touched_by_members); 
        
-         for k = 1:lengthOfOtherJointsTouched
+         for k = 1:2
              if other_joints_touched_by_members(k) ~= i
                  first = other_joints_touched_by_members(k); 
              end 
@@ -84,38 +83,46 @@ for i = 1:C_rows
          %top half of A matrix (x)
          A(i,members_touched_by_jointI(j)) =  (X(first)-X(i))/sqrt((X(first)-X(i))^2 +(Y(first)-Y(i))^2);
          %bottom half of A matrix (y)
-         A(i+4,members_touched_by_jointI(j)) =  (Y(first)-Y(i))/sqrt((X(first)-X(i))^2 +(Y(first)-Y(i))^2);
+         A(i+C_rows,members_touched_by_jointI(j)) =  (Y(first)-Y(i))/sqrt((X(first)-X(i))^2 +(Y(first)-Y(i))^2);
     end 
 end
 
+% calculate load 
+load = sum(L); 
+
 % calculate T vector 
-T = inv(A)* (-L'); 
+T = A\-L'; 
 lengthofT = length(T); 
 
-% calculate totalcost 10J+1L (finish later) 
-totalcost = 10*(C_rows)   
+% calculate running distance
+for j = 1:C_columns
+        vec = find(C(:,j))';
+        vec1 = (vec(1));
+        vec2 = (vec(2));
+        distance = sqrt((X(vec1)-X(vec2))^2 + (Y(vec1)-Y(vec2))^2);
+        running_length = running_length + distance; 
+end
 
-% calculate ratios (finish later) 
-ratio 
+% calculate totalcost 10J+1L (finish later) 
+totalcost = 10*(C_rows) + running_length;    
+
+% calculate ratio cost/load ratio 
+ratio = load/totalcost; 
 
 
 % --------------------- output ----------------------------
 % reproduce input file header and print the file execution date  
 fprintf("\n")
-disp("% EK301, Section C1, 7/22/20. ")
 
-disp("% DATE: 07/22/20")
 
 % print applied load 
-fprintf("Load: %d N \n", sum(L)) 
+fprintf("Load: %d N \n", load) 
 
 fprintf("Member forces in Newtons \n")    
 
-
 for i = 1:lengthofT-3
-    
     % print label of member and magnitude 
-    fprintf("m%d: %.3f ", i, T(i))
+    fprintf("m%d: %.3f ", i, abs(T(i)))
     
     % print tension or compression
     if T(i) ==0 
@@ -125,7 +132,6 @@ for i = 1:lengthofT-3
         else 
             fprintf("(C) \n"); 
     end 
-  
 end 
 
 % print reaction forces 
@@ -135,8 +141,10 @@ fprintf("Sy1: %.2f \n", T(lengthofT-1))
 fprintf("Sy2: %.2f \n", T(lengthofT))
 
 % print costs 
-fprintf("Cost of truss: $%d \n", totalcost)
-fprintf("Theoretical max load/cost ratio in N/$: %.4d \n", ratio)
+fprintf("Cost of truss: $%.2f \n", totalcost)
+fprintf("Theoretical max load/cost ratio in N/$: %.4f \n", ratio)
+
+
 
 
 
